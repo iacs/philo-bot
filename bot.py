@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import logging.handlers
 
@@ -14,7 +15,7 @@ class Philobot(discord.Client):
         log = logging.getLogger('philobot')
         log.setLevel(logging.INFO)
         fmtr = logging.Formatter(
-            '{asctime} - [{levelname}] {name}: {message} ({lineno})', style='{')
+            '{asctime} - [{levelname}] {message} ({lineno})', style='{')
         trfh = logging.handlers.TimedRotatingFileHandler(LOGPATH, 'W0', 1)
         shd = logging.StreamHandler()
         trfh.setFormatter(fmtr)
@@ -35,11 +36,34 @@ class Philobot(discord.Client):
             return
 
         if message.content == '!rules':
-            response = 'rules text coming soon'
-            await message.channel.send(response)
+            response = self.get_rules_str('data/rules_global.json')
+            member = message.author
+            await member.send(response)
+
+    async def on_message_delete(self, msg):
+        self.log.info(f'User {msg.author} deleted message [{msg.id}]: "{msg.content}"')
+        print(msg.embeds)
+        if len(msg.embeds) > 0:
+            self.log.info(f'[{msg.id}] contained embeds: {msg.embeds}')
+        if len(msg.attachments) > 0:
+            self.log.info(f'[{msg.id}] contained attachments: {msg.attachments}')
 
     async def on_disconnect(self):
         self.log.info('disconnected')
+
+    def get_rules_str(self, rulesfile):
+        data = self.load_json_data(rulesfile)
+        lines = data.get('rules')
+        response = '\n'.join(lines)
+        return response
+
+    def load_json_data(self, filepath):
+        try:
+            with open(filepath, 'r') as jsonfile:
+                data = json.load(jsonfile)
+                return data
+        except FileNotFoundError as err:
+            self.log.error(f'JSON file not found: {err}')
 
 
 def main():
