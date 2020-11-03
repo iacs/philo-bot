@@ -3,24 +3,27 @@ import discord
 
 from dotenv import load_dotenv
 
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
 
-client = discord.Client()
+class Philobot(discord.Client):
+    async def on_ready(self):
+        print(f'{self.user} Raring to go!')
+
+    async def on_message(self, message):
+        if message.author == self.user:
+            return
+
+        if message.content == '!rules':
+            response = 'rules text coming soon'
+            await message.channel.send(response)
 
 
-@client.event
-async def on_ready():
-    print(f'{client.user} Raring to go!')
+def main():
+    load_dotenv()
+    token = os.getenv('DISCORD_TOKEN')
+    client = Philobot()
+
+    client.run(token)
 
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content == '!rules':
-        response = 'rules text coming soon'
-        await message.channel.send(response)
-
-client.run(TOKEN)
+if __name__ == '__main__':
+    main()
